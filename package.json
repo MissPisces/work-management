@@ -1,0 +1,65 @@
+{
+  "name": "work-management",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "工作管理桌面应用 - 提升效率，管理日常",
+  "author": "work-management contributors",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MissPisces/work-management.git"
+  },
+  "homepage": "https://github.com/MissPisces/work-management#readme",
+  "bugs": {
+    "url": "https://github.com/MissPisces/work-management/issues"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "electron:dev": "vite build && electron electron/main.cjs",
+    "electron:serve": "concurrently \"vite\" \"wait-on http://localhost:5180 && electron electron/main.cjs\"",
+    "electron:build": "vite build && electron-builder"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "vite": "^5.4.10",
+    "wait-on": "^8.0.0"
+  },
+  "main": "electron/main.cjs",
+  "build": {
+    "appId": "com.traework.workmanagement",
+    "productName": "工作管理",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "工作管理"
+    }
+  },
+  "dependencies": {
+    "lunar-javascript": "^1.7.7"
+  }
+}

@@ -1,0 +1,21 @@
+node_modules
+dist
+release
+.electron-builder-cache
+.DS_Store
+*.local
+_venv
+_pw_browsers
+.pw-browsers
+_verify.py
+_verify_*.png
+
+# IDE / AI 工具产物
+.agents
+.codebuddy
+
+# 内部审计文档（不公开）
+审计报告.md
+综合审计报告.md
+按优先级拆好的落地修改清单.md
+project_audit_report.md
