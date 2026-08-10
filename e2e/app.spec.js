@@ -57,4 +57,26 @@ test.describe('工作管理应用 E2E 测试', () => {
     expect(rateText).not.toContain('100');
     await app.close();
   });
+
+  test('添加子任务后单次保存即可关闭编辑弹窗', async () => {
+    const app = await electron.launch({ args: ['electron/main.cjs'] });
+    const window = await app.firstWindow();
+    await window.waitForLoadState('domcontentloaded');
+
+    // 点击首个任务名称打开编辑弹窗
+    await window.waitForSelector('[data-task-name]', { timeout: 10000 });
+    await window.click('[data-task-name]');
+    await window.waitForSelector('#et-add-subtask', { timeout: 10000 });
+
+    // 添加子任务并重命名（替换默认“新子任务”）
+    await window.click('#et-add-subtask');
+    await window.locator('.et-subtask-input').last().fill('E2E验证子任务');
+
+    // 单次保存应同时提交子任务数据并关闭弹窗（回归：修复前需点击两次）
+    await window.click('#et-save');
+
+    // 验证弹窗已关闭（modal-backdrop 被移除）
+    await window.waitForSelector('.modal-backdrop', { state: 'detached', timeout: 5000 });
+    await app.close();
+  });
 });

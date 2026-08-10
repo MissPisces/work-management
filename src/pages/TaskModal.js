@@ -251,19 +251,30 @@ export function openEditModal(taskId, onClose) {
             cb.checked = false;
             return;
           }
+          commitSubtaskNames();
           store.updateSubtask(taskId, cb.dataset.stToggle, { done: cb.checked });
-        });
-      });
-      subtaskListEl.querySelectorAll('[data-st-edit]').forEach((input) => {
-        input.addEventListener('change', () => {
-          store.updateSubtask(taskId, input.dataset.stEdit, { name: input.value.trim() });
         });
       });
     }
   }
 
+  // 提交子任务输入框中未保存的名称编辑，避免重渲染丢失输入
+  function commitSubtaskNames() {
+    const fresh = store.getTask(taskId);
+    if (!fresh) return;
+    subtaskListEl.querySelectorAll('[data-st-edit]').forEach((input) => {
+      const id = input.dataset.stEdit;
+      const value = input.value.trim();
+      const st = fresh.subtasks.find((s) => s.id === id);
+      if (st && st.name !== value) {
+        store.updateSubtask(taskId, id, { name: value });
+      }
+    });
+  }
+
   if (!isReadOnly) {
     modal.querySelector('#et-add-subtask').addEventListener('click', () => {
+      commitSubtaskNames();
       store.addSubtask(taskId, '新子任务');
       setTimeout(() => {
         renderSubtasks();
@@ -336,6 +347,7 @@ export function openEditModal(taskId, onClose) {
         modal.querySelector('#et-name').focus();
         return;
       }
+      commitSubtaskNames();
       store.updateTask(taskId, {
         name,
         description: modal.querySelector('#et-desc').value.trim(),
