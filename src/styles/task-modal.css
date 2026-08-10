@@ -597,7 +597,7 @@
 .et-timeline::-webkit-scrollbar { width: 6px; }
 .et-timeline::-webkit-scrollbar-thumb { background: var(--bg-overlay-l2); border-radius: 3px; }
 .et-timeline::-webkit-scrollbar-track { background: transparent; }
-.et-timeline-item { display: flex; gap: 12px; min-height: 40px; }
+.et-timeline-item { display: flex; gap: 12px; min-height: 40px; flex-shrink: 0; }
 .et-timeline-track {
   display: flex;
   flex-direction: column;
