@@ -6,6 +6,9 @@ release
 .DS_Store
 *.local
 _venv
+.pw-browsers
+_pw_browsers
+test-results
 
 # IDE / AI 工具产物
 .agents
