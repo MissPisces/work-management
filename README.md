@@ -71,6 +71,26 @@ npm run electron:build
 
 > 打包前请在 `electron/` 目录放置 `icon.png`（建议 512×512 透明背景），否则 `electron:build` 会因图标缺失而失败。
 
+## Windows 7 支持
+
+Electron 23+ 已不再支持 Windows 7。如需构建 Win7 兼容安装包，请按以下步骤操作：
+
+1. 将 `package.json` 中 Electron 版本降级到 `22.x`（最后一个支持 Win7 的大版本）：
+   ```json
+   "electron": "^22.0.0"
+   ```
+2. 修改 `version` 字段以避免与主分支安装包重名：
+   ```json
+   "version": "1.0.0-win7"
+   ```
+3. 重新安装依赖并打包：
+   ```bash
+   npm install
+   npm run electron:build
+   ```
+
+打包产物 `工作管理 Setup 1.0.0-win7.exe` 将生成在 `release/` 目录下。已构建的 Win7 安装包可在 [Releases](https://github.com/MissPisces/work-management/releases/tag/v1.0.0) 页面直接下载，无需自行编译。
+
 ## 协议
 
 本项目基于 [MIT License](./LICENSE) 开源。
