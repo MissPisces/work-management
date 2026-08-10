@@ -100,7 +100,7 @@ if (!gotTheLock) {
       y: 80,
       frame: false,            // 无边框
       backgroundColor: '#ffffff', // 不透明背景：避免 Windows 透明窗口失焦后停止重绘的 bug
-      alwaysOnTop: true,       // 置顶
+      alwaysOnTop: false,      // 默认不置顶，聚焦时动态置顶（见下方 focus/blur 处理）
       skipTaskbar: true,       // 不显示在任务栏
       resizable: true,         // 可调整大小
       maximizable: false,
@@ -121,6 +121,10 @@ if (!gotTheLock) {
       floatWindow.show();
       floatWindow.focus();
     });
+
+    // 悬浮窗聚焦时置顶，失焦时恢复系统默认 Z 序，避免遮挡其他程序窗口
+    floatWindow.on('focus', () => floatWindow.setAlwaysOnTop(true));
+    floatWindow.on('blur', () => floatWindow.setAlwaysOnTop(false));
 
     if (isDevServer) {
       floatWindow.loadURL('http://localhost:5180/float.html');
