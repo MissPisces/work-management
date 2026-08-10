@@ -3,7 +3,6 @@
 
 import { store } from '../store.js';
 import { icons } from '../utils/icons.js';
-import { toISODate, fromISODate } from '../utils/date.js';
 
 const RANGES = [
   { key: 'today', label: '今日' },
@@ -377,7 +376,7 @@ export function createStatsPage() {
     const svgEl = el.querySelector('.combo-chart__svg');
     if (tooltip && svgEl) {
       el.querySelectorAll('.cmb-hover-target').forEach((target) => {
-        target.addEventListener('mouseenter', (e) => {
+        target.addEventListener('mouseenter', (_e) => {
           const dayIdx = parseInt(target.dataset.day, 10);
           const d = weeklyData[dayIdx];
           if (!d) return;

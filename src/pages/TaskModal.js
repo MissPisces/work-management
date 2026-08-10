@@ -7,8 +7,6 @@ import {
   formatShortDate, daysBetween, toISODate, fromISODate, formatRelativeTime,
 } from '../utils/date.js';
 
-const PRIORITY_LABEL = { high: '高', mid: '中', low: '低' };
-
 // ─── 创建任务弹窗 ─────────────────────────────────────────
 export function openCreateModal(onClose) {
   document.querySelectorAll('.modal-backdrop').forEach((b) => b.remove());
@@ -88,7 +86,7 @@ export function openCreateModal(onClose) {
     document.removeEventListener('keydown', onKey);
     document.querySelectorAll('.modal-backdrop').forEach((b) => b.remove());
     if (typeof onClose === 'function') {
-      try { onClose(); } catch (_) {}
+      try { onClose(); } catch { /* ignore */ }
     }
   };
 
@@ -311,12 +309,12 @@ export function openEditModal(taskId, onClose) {
 
   function close() {
     if (unsub) {
-      try { unsub(); } catch (_) {}
+      try { unsub(); } catch { /* ignore */ }
     }
     document.removeEventListener('keydown', onKey);
     document.querySelectorAll('.modal-backdrop').forEach((b) => b.remove());
     if (typeof onClose === 'function') {
-      try { onClose(); } catch (_) {}
+      try { onClose(); } catch { /* ignore */ }
     }
   }
 

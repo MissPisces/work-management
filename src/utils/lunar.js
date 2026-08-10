@@ -54,7 +54,7 @@ export function solarToLunar(year, month, day) {
       yearName: lunar.getYearInGanZhi() + '年',     // 如"丙午年"
       zodiac: lunar.getYearShengXiao(),             // 如"马"
     };
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -79,7 +79,7 @@ export function getFestival(year, month, day) {
     if (jieqi) return jieqi;
 
     return null;
-  } catch (e) {
+  } catch {
     return null;
   }
 }
@@ -106,7 +106,7 @@ export function getLunarShort(year, month, day) {
       return lunar.getMonthInChinese() + '月';
     }
     return lunar.getDayInChinese();
-  } catch (e) {
+  } catch {
     return '';
   }
 }

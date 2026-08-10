@@ -218,7 +218,7 @@ export function createTasksPage() {
                   return `<span class="wf-task-deadline-text wf-task-deadline-text--remaining" title="截止 ${t.deadline}">剩余${d.remainingDays}天</span>`;
                 }
                 // 无截止日期：保留时钟图标按时长等级变色
-                return `<span class="wf-task-clock wf-task-clock--${d.level}" title="进行 ${d.days} 天\">${icons.clock}</span>`;
+                return `<span class="wf-task-clock wf-task-clock--${d.level}" title="进行 ${d.days} 天">${icons.clock}</span>`;
               })() : ''}
             </div>
             ${subtaskListHtml}
@@ -266,7 +266,7 @@ export function createTasksPage() {
     `;
   }
 
-  function bindTableEvents(wrap, list) {
+  function bindTableEvents(wrap, _list) {
     wrap.querySelectorAll('tbody tr').forEach((tr) => {
       const taskId = tr.dataset.taskId;
       tr.querySelectorAll('[data-action]').forEach((node) => {

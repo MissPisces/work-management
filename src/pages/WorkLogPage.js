@@ -4,7 +4,7 @@
 import { store } from '../store.js';
 import { icons } from '../utils/icons.js';
 import {
-  formatLongDate, toISODate, fromISODate, isToday,
+  formatLongDate, toISODate, fromISODate,
 } from '../utils/date.js';
 import { getMonthCalendar, getMonthLabel, getLunarYearLabel } from '../utils/lunar.js';
 

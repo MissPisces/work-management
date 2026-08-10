@@ -26,7 +26,6 @@ const daysAgoISO = (n) => daysFromNow(-n);
 // ─── 种子数据 ──────────────────────────────────────────────
 // 与设计稿《我的任务》表格中显示的任务保持一致
 function buildSeedData() {
-  const now = new Date();
   const tasksList = [
     {
       id: uid(),
