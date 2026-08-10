@@ -200,11 +200,12 @@ export function createStatsPage() {
       { value: stats.progress, color: '#3182ce' },
     ].filter((item) => item.value > 0);
 
-    // 只有一种状态：画完整圆环
+    // 只有一种状态：画完整圆环，中心显示完成率（done / activeTotal）
     if (data.length === 1) {
-      const pct = Math.round((data[0].value / activeTotal) * 100);
+      const rateText = stats.completionRate != null ? stats.completionRate + '%' : '';
       return `<circle cx="50" cy="50" r="${strokeRadius}" fill="none" stroke="${data[0].color}" stroke-width="15" />
-              <text x="50" y="50" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#1d2939">${pct}%</text>`;
+              <text x="50" y="46" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#1d2939">${rateText}</text>
+              <text x="50" y="58" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#98a2b3">完成率</text>`;
     }
 
     // 多种状态：用 stroke-dasharray 分段
