@@ -6,14 +6,17 @@ release
 .DS_Store
 *.local
 _venv
-_pw_browsers
 .pw-browsers
-_verify.py
-_verify_*.png
+_pw_browsers
+test-results
 
 # IDE / AI 工具产物
 .agents
 .codebuddy
+.trae-html-share-packages
+dev-retrospective
+dev-retrospective-report
+release-notes-v1.0.0.md
 
 # 内部审计文档（不公开）
 审计报告.md
