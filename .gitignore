@@ -2,6 +2,7 @@ node_modules
 dist
 release
 .electron-builder-cache
+.electron-cache
 .DS_Store
 *.local
 _venv
@@ -13,6 +14,10 @@ _verify_*.png
 # IDE / AI 工具产物
 .agents
 .codebuddy
+.trae-html-share-packages
+dev-retrospective
+dev-retrospective-report
+release-notes-v1.0.0.md
 
 # 内部审计文档（不公开）
 审计报告.md
