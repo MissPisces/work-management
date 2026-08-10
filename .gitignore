@@ -6,14 +6,6 @@ release
 .DS_Store
 *.local
 _venv
-_pw_browsers
-.pw-browsers
-_verify.py
-_verify_*.png
-
-# 测试产物
-test-results
-playwright-report
 
 # IDE / AI 工具产物
 .agents
