@@ -207,13 +207,13 @@ export function openEditModal(taskId, onClose) {
           </div>
         </div>
       </div>
-      <div class="et-action-bar">
-        <button class="et-btn et-btn--cancel" id="et-cancel">${isReadOnly ? '关闭' : '取消'}</button>
-        ${isReadOnly ? '' : `
-          <button class="et-btn et-btn--save" id="et-save">保存</button>
-          <button class="et-btn et-btn--danger" id="et-delete" title="终止此任务">终止任务</button>
-        `}
-      </div>
+    </div>
+    <div class="et-action-bar">
+      <button class="et-btn et-btn--cancel" id="et-cancel">${isReadOnly ? '关闭' : '取消'}</button>
+      ${isReadOnly ? '' : `
+        <button class="et-btn et-btn--save" id="et-save">保存</button>
+        <button class="et-btn et-btn--danger" id="et-delete" title="终止此任务">终止任务</button>
+      `}
     </div>
   `;
 
