@@ -2,6 +2,7 @@ node_modules
 dist
 release
 .electron-builder-cache
+.electron-cache
 .DS_Store
 *.local
 _venv
