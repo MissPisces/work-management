@@ -226,11 +226,11 @@ if (!gotTheLock) {
 
   // ─── IPC 监听（一次性注册，避免随窗口创建重复绑定）─────────
   // 双击悬浮窗标题栏恢复主窗口
+  // 复用 showMainWindow()：统一处理 minimize()（任务栏）与 hide()（托盘）两种隐藏状态
+  //   - hide() 状态下若仅调用 restore()+focus()，Windows GPU 合成器不会重建渲染缓冲区，
+  //     导致主窗口框架显示但内容区域白屏/黑屏；必须调用 show() 触发完整重绘
   ipcMain.on('float-restore', () => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.restore();
-      mainWindow.focus();
-    }
+    showMainWindow();
     if (floatWindow && !floatWindow.isDestroyed()) {
       floatWindow.hide();
     }
@@ -245,13 +245,12 @@ if (!gotTheLock) {
 
   // 单击悬浮窗任务名 → 恢复主窗口并打开编辑弹窗
   ipcMain.on('float-edit-task', (_e, taskId) => {
-    if (mainWindow && !mainWindow.isDestroyed()) {
-      mainWindow.restore();
-      mainWindow.focus();
-      mainWindow.webContents.send('open-edit-task', taskId);
-    }
+    showMainWindow();
     if (floatWindow && !floatWindow.isDestroyed()) {
       floatWindow.hide();
+    }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('open-edit-task', taskId);
     }
   });
 
