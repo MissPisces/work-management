@@ -184,8 +184,8 @@ export function createStatsPage() {
   }
 
   function renderDonutSegments(stats) {
-    // 排除已终止任务，只统计活跃任务
-    const activeTotal = stats.total - stats.terminated;
+    // 环形图展示「全部主任务」的状态构成，完成率为全局口径：已完成 /（全部 − 已终止）
+    const activeTotal = stats.overallTotal - stats.overallTerminated;
     const strokeRadius = 32;
     const circumference = 2 * Math.PI * strokeRadius;
 
@@ -195,8 +195,8 @@ export function createStatsPage() {
     }
 
     const data = [
-      { value: stats.done, color: '#1a365d' },
-      { value: stats.progress, color: '#3182ce' },
+      { value: stats.overallDone, color: '#1a365d' },
+      { value: stats.overallProgress, color: '#3182ce' },
     ].filter((item) => item.value > 0);
 
     // 只有一种状态：画完整圆环，中心显示完成率（done / activeTotal）
@@ -237,70 +237,87 @@ export function createStatsPage() {
     el.innerHTML = `
       <div class="stats-header">
         <button class="wf-menu-toggle-btn" id="stats-menu-toggle">${icons.menu}</button>
-        <div class="stats-range-bar">
-          ${RANGES.map((r) => `
-            <button class="stats-range-pill ${state.range === r.key ? 'stats-range-pill--active' : ''}" data-range="${r.key}">${r.label}</button>
-          `).join('')}
-        </div>
-      </div>
-      ${state.range === 'custom' ? `
-        <div class="stats-custom-date">
-          <input type="date" id="stats-custom-start" value="${state.customStart}" class="stats-custom-date__input" />
-          <span class="stats-custom-date__separator">至</span>
-          <input type="date" id="stats-custom-end" value="${state.customEnd}" class="stats-custom-date__input" />
-          <button class="wf-btn wf-btn--secondary" id="stats-custom-apply">应用</button>
-        </div>
-      ` : ''}
-
-      <div class="stats-kpi-row">
-        <div class="stats-kpi-card">
-          <div class="stats-kpi__metric metric ${stats.total > 0 ? 'is-clickable' : ''}" ${stats.total > 0 ? 'data-kpi-click="all"' : ''}>${stats.total}</div>
-          <div class="stats-kpi__label">任务总数</div>
-        </div>
-        <div class="stats-kpi-card">
-          <div class="stats-kpi__metric metric stats-kpi__metric--brand ${stats.done > 0 ? 'is-clickable' : ''}" ${stats.done > 0 ? 'data-kpi-click="done"' : ''}>${stats.done}</div>
-          <div class="stats-kpi__label">任务完成数</div>
-        </div>
-        <div class="stats-kpi-card">
-          <div class="stats-kpi__metric metric stats-kpi__metric--error ${stats.overdue > 0 ? 'is-clickable' : ''}" ${stats.overdue > 0 ? 'data-kpi-click="overdue"' : ''}>${stats.overdue}</div>
-          <div class="stats-kpi__label">逾期任务</div>
-        </div>
-        <div class="stats-kpi-card">
-          <div class="stats-kpi__metric metric stats-kpi__metric--warning ${stats.terminated > 0 ? 'is-clickable' : ''}" ${stats.terminated > 0 ? 'data-kpi-click="terminated"' : ''}>${stats.terminated}</div>
-          <div class="stats-kpi__label">终止任务数</div>
-        </div>
       </div>
 
-      <div class="stats-charts-grid">
-        <div class="stats-chart-card">
-          <div class="stats-chart-card__title">任务完成率</div>
+      <div class="stats-hero-row">
+        <div class="stats-overdue-card ${stats.overdue > 0 ? 'is-danger' : 'is-success'}" ${stats.overdue > 0 ? 'data-kpi-click="overdue"' : ''}>
+          <span class="stats-overdue-card__icon">${stats.overdue > 0 ? icons.warning : icons.checkCircle}</span>
+          <span class="stats-overdue-card__num">${stats.overdue}</span>
+          <div class="stats-overdue-card__body">
+            <div class="stats-overdue-card__label">逾期任务数</div>
+            <div class="stats-overdue-card__hint">
+              ${stats.overdue > 0
+                ? (stats.overdueMaxDays > 0 ? `最久已逾期 ${stats.overdueMaxDays} 天，建议优先处理` : '建议优先处理')
+                : '当前无逾期任务，一切按时推进'}
+            </div>
+          </div>
+        </div>
+        <div class="stats-chart-card stats-hero-card">
+          <div class="stats-chart-card__title">任务完成率 <span style="font-size:12px;color:#98a2b3;font-weight:400">（全部任务 · 不随时间范围变化）</span></div>
           <div class="stats-chart-card__body">
-            <div class="donut-chart">
-              <svg viewBox="0 0 100 100" class="donut-chart__svg">
+            <div class="donut-chart donut-chart--compact">
+              <svg viewBox="0 0 100 100" class="donut-chart__svg donut-chart__svg--compact">
                 ${renderDonutSegments(stats)}
               </svg>
-              <div class="donut-chart__legend">
+              <div class="donut-chart__legend donut-chart__legend--rows">
                 <div class="donut-chart__legend-item">
                   <span class="donut-chart__legend-dot" style="background:#1a365d"></span>
                   <span class="donut-chart__legend-label">已完成</span>
-                  <span class="donut-chart__legend-value">${stats.done}</span>
+                  <span class="donut-chart__legend-value">${stats.overallDone}</span>
                 </div>
                 <div class="donut-chart__legend-item">
                   <span class="donut-chart__legend-dot" style="background:#3182ce"></span>
                   <span class="donut-chart__legend-label">进行中</span>
-                  <span class="donut-chart__legend-value">${stats.progress}</span>
+                  <span class="donut-chart__legend-value">${stats.overallProgress}</span>
                 </div>
                 <div class="donut-chart__legend-item">
                   <span class="donut-chart__legend-dot" style="background:#c0392b"></span>
                   <span class="donut-chart__legend-label">已终止</span>
-                  <span class="donut-chart__legend-value">${stats.terminated}</span>
+                  <span class="donut-chart__legend-value">${stats.overallTerminated}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="stats-section-divider"></div>
+
+      <div class="stats-range-section">
+        <div class="stats-range-bar">
+          ${RANGES.map((r) => `
+            <button class="stats-range-pill ${state.range === r.key ? 'stats-range-pill--active' : ''}" data-range="${r.key}">${r.label}</button>
+          `).join('')}
+        </div>
+        ${state.range === 'custom' ? `
+          <div class="stats-custom-date">
+            <input type="date" id="stats-custom-start" value="${state.customStart}" class="stats-custom-date__input" />
+            <span class="stats-custom-date__separator">至</span>
+            <input type="date" id="stats-custom-end" value="${state.customEnd}" class="stats-custom-date__input" />
+            <button class="wf-btn wf-btn--secondary" id="stats-custom-apply">应用</button>
+          </div>
+        ` : ''}
+        <div class="stats-kpi-row">
+          <div class="stats-kpi-card">
+            <div class="stats-kpi__metric metric ${stats.total > 0 ? 'is-clickable' : ''}" ${stats.total > 0 ? 'data-kpi-click="all"' : ''}>${stats.total}</div>
+            <div class="stats-kpi__label">任务总数</div>
+          </div>
+          <div class="stats-kpi-card">
+            <div class="stats-kpi__metric metric stats-kpi__metric--brand ${stats.done > 0 ? 'is-clickable' : ''}" ${stats.done > 0 ? 'data-kpi-click="done"' : ''}>${stats.done}</div>
+            <div class="stats-kpi__label">任务完成数</div>
+          </div>
+          <div class="stats-kpi-card">
+            <div class="stats-kpi__metric metric stats-kpi__metric--warning ${stats.terminated > 0 ? 'is-clickable' : ''}" ${stats.terminated > 0 ? 'data-kpi-click="terminated"' : ''}>${stats.terminated}</div>
+            <div class="stats-kpi__label">终止任务数</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-section-divider"></div>
+
+      <div class="stats-trend-section">
         <div class="stats-chart-card">
-          <div class="stats-chart-card__title stats-chart-card__title--center">每周任务趋势</div>
+          <div class="stats-chart-card__title stats-chart-card__title--center">本周任务趋势</div>
           <div class="stats-chart-card__body">
             ${renderComboChart(weeklyData)}
           </div>
@@ -346,7 +363,9 @@ export function createStatsPage() {
     el.querySelectorAll('[data-kpi-click]').forEach((card) => {
       card.addEventListener('click', () => {
         const filterType = card.dataset.kpiClick;
-        window.location.hash = `#/tasks?filter=${filterType}&range=${state.range}`;
+        // 逾期为全局口径，下钻不携带范围参数
+        const rangeSuffix = filterType === 'overdue' ? '' : `&range=${state.range}`;
+        window.location.hash = `#/tasks?filter=${filterType}${rangeSuffix}`;
       });
     });
 

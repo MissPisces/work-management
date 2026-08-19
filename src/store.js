@@ -23,6 +23,21 @@ const daysFromNow = (n) => {
 
 const daysAgoISO = (n) => daysFromNow(-n);
 
+// 任务状态归因日期：任务「进入当前状态」的日期，作为时间范围统计的统一口径
+// 已完成 → 最后一条「完成任务」日志的日期；已终止 → 最后一条「终止任务」日志的日期；进行中 → 创建日期
+const statusDateOf = (t) => {
+  const logs = t.logs || [];
+  if (t.status === 'done') {
+    const doneLog = [...logs].reverse().find((l) => l.text === '完成任务');
+    return (doneLog && doneLog.date) || t.createdAt;
+  }
+  if (t.status === 'terminated') {
+    const termLog = [...logs].reverse().find((l) => l.text && l.text.startsWith('终止任务'));
+    return (termLog && termLog.date) || t.createdAt;
+  }
+  return t.createdAt;
+};
+
 // ─── 种子数据 ──────────────────────────────────────────────
 // 与设计稿《我的任务》表格中显示的任务保持一致
 function buildSeedData() {
@@ -325,8 +340,9 @@ class Store {
     return this._state.tasks.find((t) => t.id === id) || null;
   }
 
-  // 按时间范围筛选任务（与 getStats 的筛选逻辑一致）
-  getTasksByRange(range) {
+  // 按时间范围筛选任务（basis 与 getStats 各指标口径一致）：
+  // 'created'（默认）按创建日期；'done' 按完成日期（仅已完成任务）；'terminated' 按终止日期（仅已终止任务）
+  getTasksByRange(range, basis = 'created') {
     const tasks = this._state.tasks;
     const now = new Date();
     let startDate = null;
@@ -353,6 +369,12 @@ class Store {
       const [y, m, d] = isoDate.split('-').map(Number);
       return new Date(y, m - 1, d) >= startDate;
     };
+    if (basis === 'done') {
+      return tasks.filter((t) => t.status === 'done' && inRange(statusDateOf(t)));
+    }
+    if (basis === 'terminated') {
+      return tasks.filter((t) => t.status === 'terminated' && inRange(statusDateOf(t)));
+    }
     return tasks.filter((t) => inRange(t.createdAt));
   }
 
@@ -613,22 +635,49 @@ class Store {
       return taskDate >= startDate;
     };
 
-    const filtered = tasks.filter((t) => inRange(t.createdAt));
-    const total = filtered.length;
-    const done = filtered.filter((t) => t.status === 'done').length;
-    const progress = filtered.filter((t) => t.status === 'progress' || t.status === 'todo').length;
-    const terminated = filtered.filter((t) => t.status === 'terminated').length;
+    // 按指标性质拆分口径：
+    // 任务总数/进行中 → 范围内新建（createdAt，稳定且与趋势柱状图「新建主任务」一致）
+    const createdSet = tasks.filter((t) => inRange(t.createdAt));
+    // 任务完成数 → 范围内完成（完成日志日期，含之前创建的任务）
+    const doneSet = tasks.filter((t) => t.status === 'done' && inRange(statusDateOf(t)));
+    // 终止任务数 → 范围内终止（终止日志日期）
+    const terminatedSet = tasks.filter((t) => t.status === 'terminated' && inRange(statusDateOf(t)));
+
+    const total = createdSet.length;
+    const done = doneSet.length;
+    const progress = createdSet.filter((t) => t.status === 'progress' || t.status === 'todo').length;
+    const terminated = terminatedSet.length;
     const todo = 0; // 已合并到进行中，不再单独统计
-    const activeTotal = total - terminated;
-    const completionRate = activeTotal > 0 ? Math.round((done / activeTotal) * 100) : 0;
 
-    // 逾期：未完成且截止日期早于今天
+    // 完成率：全局口径，不随时间范围变化——所有已完成主任务 /（所有主任务 − 已终止）
+    // 只统计主任务状态（子任务完成不等于主任务完成），用于呈现整体任务急切度
+    const overallTotal = tasks.length;
+    const overallDone = tasks.filter((t) => t.status === 'done').length;
+    const overallTerminated = tasks.filter((t) => t.status === 'terminated').length;
+    const overallProgress = overallTotal - overallDone - overallTerminated;
+    const completionRate = (overallTotal - overallTerminated) > 0
+      ? Math.round((overallDone / (overallTotal - overallTerminated)) * 100)
+      : 0;
+
+    // 逾期：当前全部逾期任务（当前状态，不随时间范围过滤）
     const todayStr = todayISO();
-    const overdue = filtered.filter((t) => t.status !== 'done' && t.status !== 'terminated' && t.deadline && t.deadline < todayStr).length;
+    const overdueTasks = tasks.filter((t) => t.status !== 'done' && t.status !== 'terminated' && t.deadline && t.deadline < todayStr);
+    const overdue = overdueTasks.length;
+    // 最久逾期天数：逾期任务中截止日距今最久的天数（统计页警示卡展示急迫程度）
+    let overdueMaxDays = 0;
+    if (overdue > 0) {
+      const [ty, tm, td] = todayStr.split('-').map(Number);
+      const today = new Date(ty, tm - 1, td);
+      overdueTasks.forEach((t) => {
+        const [y, m, d] = t.deadline.split('-').map(Number);
+        const days = Math.floor((today - new Date(y, m - 1, d)) / 86400000);
+        if (days > overdueMaxDays) overdueMaxDays = days;
+      });
+    }
 
-    // 优先级分布
+    // 优先级分布：基于范围内新建任务
     const priorityCount = { high: 0, mid: 0, low: 0 };
-    filtered.forEach((t) => { priorityCount[t.priority] = (priorityCount[t.priority] || 0) + 1; });
+    createdSet.forEach((t) => { priorityCount[t.priority] = (priorityCount[t.priority] || 0) + 1; });
 
     // 近 7 天每日完成任务数（柱状图）
     const dailyDone = [];
@@ -650,10 +699,12 @@ class Store {
     const maxDaily = Math.max(1, ...dailyDone.map((d) => d.count));
 
     return {
-      total, done, progress, terminated, todo, completionRate, overdue,
+      total, done, progress, terminated, todo, completionRate, overdue, overdueMaxDays,
       priorityCount,
       dailyDone,
       maxDaily,
+      // 全部主任务的状态构成（环形图与全局完成率使用，保证中心百分比与分段占比一致）
+      overallTotal, overallDone, overallProgress, overallTerminated,
     };
   }
 }

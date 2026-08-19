@@ -86,9 +86,8 @@
 /* ===== KPI Cards ===== */
 .stats-kpi-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
   flex-shrink: 0;
 }
 
@@ -134,11 +133,99 @@
   font-weight: 400;
 }
 
-/* ===== Charts Grid ===== */
-.stats-charts-grid {
+/* ===== Hero Row（第一排：逾期警示卡 + 任务完成率）===== */
+.stats-hero-row {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 20px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.stats-hero-card .stats-chart-card__body {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 逾期警示卡：有逾期为红色警示，无逾期为绿色安心态 */
+.stats-overdue-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-base-default);
+  border: 1px solid var(--border-neutral-l1);
+  border-radius: 8px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.stats-overdue-card.is-danger {
+  background: #fef2f2;
+  border-color: #fecaca;
+  box-shadow: inset 4px 0 0 #ef4444, 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.stats-overdue-card.is-danger:hover {
+  filter: brightness(0.97);
+}
+.stats-overdue-card.is-success {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  box-shadow: inset 4px 0 0 #10b981, 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+.stats-overdue-card__icon {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  display: inline-flex;
+}
+.stats-overdue-card.is-danger .stats-overdue-card__icon { color: #ef4444; }
+.stats-overdue-card.is-success .stats-overdue-card__icon { color: #10b981; }
+.stats-overdue-card__num {
+  font-family: var(--font-family-metric);
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.2;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.stats-overdue-card.is-danger .stats-overdue-card__num { color: #ef4444; }
+.stats-overdue-card.is-success .stats-overdue-card__num { color: #10b981; }
+.stats-overdue-card__label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.stats-overdue-card__hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
+/* ===== 分区分隔线 ===== */
+.stats-section-divider {
+  height: 1px;
+  background: var(--border-neutral-l1);
+  margin: 20px 0;
+  flex-shrink: 0;
+}
+
+/* ===== 范围统计区（pills + 三张 KPI 卡）===== */
+.stats-range-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+/* ===== 本周任务趋势区（占满剩余高度）===== */
+.stats-trend-section {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.stats-trend-section .stats-chart-card {
   flex: 1;
 }
 
@@ -183,6 +270,23 @@
 .donut-chart__svg {
   width: 220px;
   height: 220px;
+}
+
+/* 紧凑模式（第一排完成率卡）：小环 + 右侧纵向图例 */
+.donut-chart--compact {
+  flex-direction: row;
+  gap: 20px;
+}
+.donut-chart__svg--compact {
+  width: 130px;
+  height: 130px;
+  flex-shrink: 0;
+}
+.donut-chart__legend--rows {
+  grid-template-columns: 1fr;
+  width: auto;
+  max-width: none;
+  gap: 8px;
 }
 
 .donut-chart__label-text {
@@ -443,8 +547,8 @@
 
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
-  .stats-kpi-row { grid-template-columns: repeat(2, 1fr); }
-  .stats-charts-grid { grid-template-columns: 1fr; }
+  .stats-hero-row { grid-template-columns: 1fr; }
+  .stats-kpi-row { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 480px) {
   .stats-kpi-row { grid-template-columns: 1fr; gap: 12px; }
@@ -452,5 +556,7 @@
   .stats-range-pill { padding: 0 10px; font-size: 12px; }
   .bar-chart { height: 160px; gap: 8px; }
   .donut-chart__svg { width: 180px; height: 180px; }
+  .donut-chart__svg--compact { width: 110px; height: 110px; }
   .donut-chart__legend { grid-template-columns: 1fr; }
+  .stats-overdue-card__num { font-size: 28px; }
 }

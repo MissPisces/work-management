@@ -47,9 +47,15 @@ export function createTasksPage() {
         (t.subtasks && t.subtasks.some((s) => (s.name || '').toLowerCase().includes(q)))
       );
     } else if (urlFilter) {
-      // 使用与 getStats 完全一致的筛选逻辑：先按时间范围，再按 KPI 类型
-      const rangeTasks = urlRange ? store.getTasksByRange(urlRange) : store.getTasks().slice();
-      list = store.filterByKpiType(rangeTasks, urlFilter);
+      // 与 getStats 各指标口径一致：总数按新建、完成按完成日期、终止按终止日期；
+      // 逾期是当前状态，不随时间范围过滤
+      if (urlFilter === 'overdue') {
+        list = store.filterByKpiType(store.getTasks().slice(), 'overdue');
+      } else {
+        const basis = { all: 'created', done: 'done', terminated: 'terminated' }[urlFilter] || 'created';
+        const rangeTasks = urlRange ? store.getTasksByRange(urlRange, basis) : store.getTasks().slice();
+        list = store.filterByKpiType(rangeTasks, urlFilter);
+      }
     } else {
       list = list.filter((t) => t.status !== 'done' && t.status !== 'terminated');
     }
@@ -82,7 +88,7 @@ export function createTasksPage() {
 
     const showFilterBanner = urlFilter && !state.search;
     const filterLabel = FILTER_LABELS[urlFilter] || '任务';
-    const rangeLabel = urlRange ? (RANGE_LABELS[urlRange] || '') + ' · ' : '';
+    const rangeLabel = urlRange && urlFilter !== 'overdue' ? (RANGE_LABELS[urlRange] || '') + ' · ' : '';
 
     el.innerHTML = `
       <div class="wf-page-header">
