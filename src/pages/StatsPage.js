@@ -14,13 +14,20 @@ const RANGES = [
   { key: 'custom', label: '自定义' },
 ];
 
+// 趋势图 SVG 内边距（渲染与 tooltip 定位共用）
+const CHART_PAD_LEFT = 40;
+const CHART_PAD_RIGHT = 12;
+
 export function createStatsPage() {
-  const state = { 
+  const state = {
     range: 'today',
     customStart: '',
     customEnd: '',
     hiddenSeries: {},
   };
+
+  // 趋势图参考宽度：与卡片内容区实际宽度一致，由 ResizeObserver 校正
+  let chartW = 1140;
 
   const el = document.createElement('div');
   el.className = 'stats-page-container';
@@ -75,26 +82,26 @@ export function createStatsPage() {
   }
 
   const SERIES_CONFIG = [
-    { key: 'newTask', label: '新建主任务', color: '#1a365d', type: 'bar' },
-    { key: 'newSubtask', label: '新建子任务', color: '#3182ce', type: 'bar' },
-    { key: 'doneTask', label: '完成主任务', color: '#276749', type: 'bar' },
-    { key: 'doneSubtask', label: '完成子任务', color: '#48bb78', type: 'bar' },
+    { key: 'newTask', label: '新建主任务', color: 'var(--viz-series-brand)', type: 'bar' },
+    { key: 'newSubtask', label: '新建子任务', color: 'var(--viz-series-sky)', type: 'bar' },
+    { key: 'doneTask', label: '完成主任务', color: 'var(--viz-series-mint)', type: 'bar' },
+    { key: 'doneSubtask', label: '完成子任务', color: 'var(--viz-series-amber)', type: 'bar' },
   ];
 
   function renderComboChart(weeklyData) {
     const visibleSeries = SERIES_CONFIG.filter((s) => !state.hiddenSeries[s.key]);
-    const chartW = 640;
     const chartH = 240;
-    const padLeft = 36;
-    const padRight = 12;
+    const padLeft = CHART_PAD_LEFT;
+    const padRight = CHART_PAD_RIGHT;
     const padTop = 20;
-    const padBottom = 40;
+    const padBottom = 44;
     const plotW = chartW - padLeft - padRight;
     const plotH = chartH - padTop - padBottom;
     const numDays = 7;
     const groupW = plotW / numDays;
-    const barGap = 2;
-    const barW = (groupW - barGap * (visibleSeries.length - 1)) / Math.max(visibleSeries.length, 1);
+    const barGap = 3;
+    // 宽卡片下限制柱宽，避免柱子过粗
+    const barW = Math.min((groupW - barGap * (visibleSeries.length - 1)) / Math.max(visibleSeries.length, 1), 26);
 
     let maxVal = 0;
     weeklyData.forEach((d) => {
@@ -114,15 +121,15 @@ export function createStatsPage() {
       const val = yMax - yStep * i;
       const y = padTop + i * (plotH / yTicks);
       yLines.push(`<line x1="${padLeft}" y1="${y}" x2="${chartW - padRight}" y2="${y}" stroke="#f2f4f7" stroke-width="1" />`);
-      yLabels.push(`<text x="${padLeft - 6}" y="${y + 4}" text-anchor="end" font-size="10" fill="#98a2b3">${val}</text>`);
+      yLabels.push(`<text x="${padLeft - 6}" y="${y + 4}" text-anchor="end" font-size="13" fill="#667085">${val}</text>`);
     }
 
     const xLabels = [];
     weeklyData.forEach((d, i) => {
       const x = padLeft + i * groupW + groupW / 2;
       xLabels.push(`
-        <text x="${x}" y="${chartH - padBottom + 14}" text-anchor="middle" font-size="11" font-weight="500" fill="#475467">${d.label}</text>
-        <text x="${x}" y="${chartH - padBottom + 28}" text-anchor="middle" font-size="9" fill="#98a2b3">${d.dateLabel}</text>
+        <text x="${x}" y="${chartH - padBottom + 15}" text-anchor="middle" font-size="14" font-weight="500" fill="#475467">${d.label}</text>
+        <text x="${x}" y="${chartH - padBottom + 32}" text-anchor="middle" font-size="13" fill="#667085">${d.dateLabel}</text>
       `);
     });
 
@@ -159,11 +166,11 @@ export function createStatsPage() {
       const hidden = state.hiddenSeries[s.key];
       const total = weeklyData.reduce((sum, d) => sum + (d[s.key] || 0), 0);
       return (
-        `<div class="cmb-legend-item ${hidden ? 'is-hidden' : ''}" data-series="${s.key}" style="cursor:pointer;">
+        `<button type="button" class="cmb-legend-item ${hidden ? 'is-hidden' : ''}" data-series="${s.key}" aria-pressed="${!hidden}" title="点击切换显示">
           <span class="cmb-legend-icon" style="background:${s.color};"></span>
           <span class="cmb-legend-label">${s.label}</span>
           <span class="cmb-legend-value">${total}</span>
-        </div>`
+        </button>`
       );
     }).join('');
 
@@ -195,16 +202,16 @@ export function createStatsPage() {
     }
 
     const data = [
-      { value: stats.overallDone, color: '#1a365d' },
-      { value: stats.overallProgress, color: '#3182ce' },
+      { value: stats.overallDone, color: 'var(--viz-series-mint)' },
+      { value: stats.overallProgress, color: 'var(--viz-series-brand)' },
     ].filter((item) => item.value > 0);
 
     // 只有一种状态：画完整圆环，中心显示完成率（done / activeTotal）
     if (data.length === 1) {
       const rateText = stats.completionRate != null ? stats.completionRate + '%' : '';
       return `<circle cx="50" cy="50" r="${strokeRadius}" fill="none" stroke="${data[0].color}" stroke-width="15" />
-              <text x="50" y="46" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#1d2939">${rateText}</text>
-              <text x="50" y="58" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#98a2b3">完成率</text>`;
+              <text x="50" y="46" text-anchor="middle" dominant-baseline="middle" font-size="16" font-weight="700" fill="#1d2939">${rateText}</text>
+              <text x="50" y="59" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#667085">完成率</text>`;
     }
 
     // 多种状态：用 stroke-dasharray 分段
@@ -221,8 +228,8 @@ export function createStatsPage() {
     // 中心显示完成率（done / activeTotal，与分段占比一致）
     const rateText = stats.completionRate != null ? stats.completionRate + '%' : '';
     if (rateText) {
-      result += `<text x="50" y="46" text-anchor="middle" dominant-baseline="middle" font-size="11" font-weight="700" fill="#1d2939">${rateText}</text>
-                 <text x="50" y="58" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#98a2b3">完成率</text>`;
+      result += `<text x="50" y="46" text-anchor="middle" dominant-baseline="middle" font-size="16" font-weight="700" fill="#1d2939">${rateText}</text>
+                 <text x="50" y="59" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="#667085">完成率</text>`;
     }
     return result;
   }
@@ -240,20 +247,29 @@ export function createStatsPage() {
       </div>
 
       <div class="stats-hero-row">
-        <div class="stats-overdue-card ${stats.overdue > 0 ? 'is-danger' : 'is-success'}" ${stats.overdue > 0 ? 'data-kpi-click="overdue"' : ''}>
-          <span class="stats-overdue-card__icon">${stats.overdue > 0 ? icons.warning : icons.checkCircle}</span>
-          <span class="stats-overdue-card__num">${stats.overdue}</span>
-          <div class="stats-overdue-card__body">
-            <div class="stats-overdue-card__label">逾期任务数</div>
-            <div class="stats-overdue-card__hint">
-              ${stats.overdue > 0
-                ? (stats.overdueMaxDays > 0 ? `最久已逾期 ${stats.overdueMaxDays} 天，建议优先处理` : '建议优先处理')
-                : '当前无逾期任务，一切按时推进'}
-            </div>
+        ${stats.overdue > 0 ? `
+          <button type="button" class="stats-overdue-card is-danger" data-kpi-click="overdue" title="查看逾期任务">
+            <span class="stats-overdue-card__header">
+              <span class="stats-overdue-card__icon">${icons.warning}</span>
+              <span class="stats-overdue-card__label">逾期任务数</span>
+            </span>
+            <span class="stats-overdue-card__num">${stats.overdue}</span>
+            <span class="stats-overdue-card__hint">
+              ${stats.overdueMaxDays > 0 ? `最久已逾期 ${stats.overdueMaxDays} 天，建议优先处理` : '建议优先处理'}
+            </span>
+          </button>
+        ` : `
+          <div class="stats-overdue-card is-success">
+            <span class="stats-overdue-card__header">
+              <span class="stats-overdue-card__icon">${icons.checkCircle}</span>
+              <span class="stats-overdue-card__label">逾期任务数</span>
+            </span>
+            <span class="stats-overdue-card__num">${stats.overdue}</span>
+            <span class="stats-overdue-card__hint">当前无逾期任务，一切按时推进</span>
           </div>
-        </div>
+        `}
         <div class="stats-chart-card stats-hero-card">
-          <div class="stats-chart-card__title">任务完成率 <span style="font-size:12px;color:#98a2b3;font-weight:400">（全部任务 · 不随时间范围变化）</span></div>
+          <div class="stats-chart-card__title">任务完成率</div>
           <div class="stats-chart-card__body">
             <div class="donut-chart donut-chart--compact">
               <svg viewBox="0 0 100 100" class="donut-chart__svg donut-chart__svg--compact">
@@ -261,17 +277,17 @@ export function createStatsPage() {
               </svg>
               <div class="donut-chart__legend donut-chart__legend--rows">
                 <div class="donut-chart__legend-item">
-                  <span class="donut-chart__legend-dot" style="background:#1a365d"></span>
+                  <span class="donut-chart__legend-dot" style="background:var(--viz-series-mint)"></span>
                   <span class="donut-chart__legend-label">已完成</span>
                   <span class="donut-chart__legend-value">${stats.overallDone}</span>
                 </div>
                 <div class="donut-chart__legend-item">
-                  <span class="donut-chart__legend-dot" style="background:#3182ce"></span>
+                  <span class="donut-chart__legend-dot" style="background:var(--viz-series-brand)"></span>
                   <span class="donut-chart__legend-label">进行中</span>
                   <span class="donut-chart__legend-value">${stats.overallProgress}</span>
                 </div>
                 <div class="donut-chart__legend-item">
-                  <span class="donut-chart__legend-dot" style="background:#c0392b"></span>
+                  <span class="donut-chart__legend-dot" style="background:var(--viz-series-coral)"></span>
                   <span class="donut-chart__legend-label">已终止</span>
                   <span class="donut-chart__legend-value">${stats.overallTerminated}</span>
                 </div>
@@ -298,18 +314,39 @@ export function createStatsPage() {
           </div>
         ` : ''}
         <div class="stats-kpi-row">
-          <div class="stats-kpi-card">
-            <div class="stats-kpi__metric metric ${stats.total > 0 ? 'is-clickable' : ''}" ${stats.total > 0 ? 'data-kpi-click="all"' : ''}>${stats.total}</div>
-            <div class="stats-kpi__label">任务总数</div>
-          </div>
-          <div class="stats-kpi-card">
-            <div class="stats-kpi__metric metric stats-kpi__metric--brand ${stats.done > 0 ? 'is-clickable' : ''}" ${stats.done > 0 ? 'data-kpi-click="done"' : ''}>${stats.done}</div>
-            <div class="stats-kpi__label">任务完成数</div>
-          </div>
-          <div class="stats-kpi-card">
-            <div class="stats-kpi__metric metric stats-kpi__metric--warning ${stats.terminated > 0 ? 'is-clickable' : ''}" ${stats.terminated > 0 ? 'data-kpi-click="terminated"' : ''}>${stats.terminated}</div>
-            <div class="stats-kpi__label">终止任务数</div>
-          </div>
+          ${stats.total > 0 ? `
+            <button type="button" class="stats-kpi-card stats-kpi-card--clickable" data-kpi-click="all" title="查看任务列表">
+              <span class="stats-kpi__label">任务总数</span>
+              <span class="stats-kpi__metric metric">${stats.total}</span>
+            </button>
+          ` : `
+            <div class="stats-kpi-card">
+              <span class="stats-kpi__label">任务总数</span>
+              <span class="stats-kpi__metric metric">${stats.total}</span>
+            </div>
+          `}
+          ${stats.done > 0 ? `
+            <button type="button" class="stats-kpi-card stats-kpi-card--clickable" data-kpi-click="done" title="查看已完成任务">
+              <span class="stats-kpi__label">任务完成数</span>
+              <span class="stats-kpi__metric metric stats-kpi__metric--brand">${stats.done}</span>
+            </button>
+          ` : `
+            <div class="stats-kpi-card">
+              <span class="stats-kpi__label">任务完成数</span>
+              <span class="stats-kpi__metric metric stats-kpi__metric--brand">${stats.done}</span>
+            </div>
+          `}
+          ${stats.terminated > 0 ? `
+            <button type="button" class="stats-kpi-card stats-kpi-card--clickable" data-kpi-click="terminated" title="查看已终止任务">
+              <span class="stats-kpi__label">终止任务数</span>
+              <span class="stats-kpi__metric metric stats-kpi__metric--warning">${stats.terminated}</span>
+            </button>
+          ` : `
+            <div class="stats-kpi-card">
+              <span class="stats-kpi__label">终止任务数</span>
+              <span class="stats-kpi__metric metric stats-kpi__metric--warning">${stats.terminated}</span>
+            </div>
+          `}
         </div>
       </div>
 
@@ -317,7 +354,7 @@ export function createStatsPage() {
 
       <div class="stats-trend-section">
         <div class="stats-chart-card">
-          <div class="stats-chart-card__title stats-chart-card__title--center">本周任务趋势</div>
+          <div class="stats-chart-card__title">本周任务趋势</div>
           <div class="stats-chart-card__body">
             ${renderComboChart(weeklyData)}
           </div>
@@ -414,10 +451,8 @@ export function createStatsPage() {
           tooltip.style.display = 'block';
 
           const svgRect = svgEl.getBoundingClientRect();
-          const padLeft = 36;
-          const padRight = 12;
-          const groupW = (svgRect.width - padLeft - padRight) / 7;
-          const left = padLeft + dayIdx * groupW + groupW / 2;
+          const groupW = (svgRect.width - CHART_PAD_LEFT - CHART_PAD_RIGHT) / 7;
+          const left = CHART_PAD_LEFT + dayIdx * groupW + groupW / 2;
           const tooltipRect = tooltip.getBoundingClientRect();
           let tooltipLeft = left - tooltipRect.width / 2;
           if (tooltipLeft < 4) tooltipLeft = 4;
@@ -441,8 +476,21 @@ export function createStatsPage() {
     }
   });
 
+  // 容器尺寸变化时同步趋势图参考宽度（viewBox 随内容区宽度伸缩）
+  const resizeObserver = new ResizeObserver(() => {
+    if (!el.isConnected) return;
+    // 页面左右 padding 24×2 + 卡片左右 padding 16×2
+    const w = Math.max(320, el.clientWidth - 80);
+    if (Math.abs(w - chartW) > 32) {
+      chartW = w;
+      render();
+    }
+  });
+  resizeObserver.observe(el);
+
   el._destroy = () => {
     unsub();
+    resizeObserver.disconnect();
   };
 
   render();
